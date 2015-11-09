@@ -11,11 +11,11 @@ def test_parse_first():
         parse.parse("Hello.", True)
 
 def test_parse_boom():
-    resp = parse.parse("Boom!\n")
+    resp = parse.parse("BOOM!\n")
     assert resp.type == parse.ResponseType.BOOM
-    resp = parse.parse("Boom!\r\n")
+    resp = parse.parse("BOOM!\r\n")
     assert resp.type == parse.ResponseType.BOOM
-    resp = parse.parse("Boom!\r")
+    resp = parse.parse("BOOM!\r")
     assert resp.type == parse.ResponseType.BOOM
 
 def test_parse_board():
