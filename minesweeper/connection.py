@@ -4,8 +4,8 @@ from minesweeper import parse
 class MinesweeperClient(Protocol):
     '''Represents a connection to a server using twisted's Protocol framework.
     Created with an event sink, where parsed events (subclasses of
-    minesweeper.parse.Response) are fired. Sink should have a method
-    self.fire(event).
+    minesweeper.message.Response) are fired. Sink should have a method
+    self.response(resp).
     '''
 
     def __init__(self, event_sink):
@@ -21,18 +21,21 @@ class MinesweeperClient(Protocol):
             try:
                 resp, self.buffer = parse.parse_start(self.buffer, first=True)
                 self.size = resp.size
-                event_sink.fire(resp)
+                self.event_sink.response(resp)
             except parse.NotReadyError:
                 return # Haven't received enough data yet
 
         try:
             while True:
                 resp, self.buffer = parse.parse_start(self.buffer, self.size)
-                event_sink.fire(resp)
+                event_sink.response(resp)
         except parse.NotReadyError:
             return
 
+    def sendCommand(self, command):
+        self.transport.write(command.render())
+
     def clientConnectionLost(self, connection, reason):
-        event_sink.fire(parse.CloseResp(reason))
+        self.event_sink.response(message.CloseResp(reason))
 
 

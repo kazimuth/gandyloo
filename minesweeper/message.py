@@ -1,5 +1,51 @@
 import re
 
+class Command:
+    '''A command to send to the minecraft server.
+    Must have a method render() to turn into a minesweeper-compatible
+    command message.
+    '''
+
+    def render(self):
+        pass
+
+class LookCommand:
+    def render(self):
+        return 'look\n'
+
+class HelpCommand:
+    def render(self):
+        return 'help\n'
+
+class ByeCommand:
+    def render(self):
+        return 'bye\n'
+
+class DigCommand:
+    def __init__(self, target):
+        assert len(target) == 2
+        self.target = target
+
+    def render(self):
+        return 'dig {} {}\n'.format(*self.target)
+
+class FlagCommand:
+    def __init__(self, target):
+        assert len(target) == 2
+        self.target = target
+
+    def render(self):
+        return 'flag {} {}\n'.format(*self.target)
+
+class DeflagCommand:
+    def __init__(self, target):
+        assert len(target) == 2
+        self.target = target
+
+    def render(self):
+        return 'deflag {} {}\n'.format(*self.target)
+
+
 class Response:
     '''A parsed response from a minesweeper server.
 
@@ -53,5 +99,4 @@ class CloseResp(Response):
     '''Represents the connection from the server closing.'''
     def __init__(self, reason):
         self.reason = reason
-
 
