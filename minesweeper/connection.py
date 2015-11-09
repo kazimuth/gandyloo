@@ -16,7 +16,7 @@ class MinesweeperClient(Protocol):
 
     def dataReceived(self, data):
         self.buffer += data
-        
+
         if not self.hello_received:
             try:
                 resp, self.buffer = parse.parse_start(self.buffer, first=True)
@@ -34,3 +34,5 @@ class MinesweeperClient(Protocol):
 
     def clientConnectionLost(self, connection, reason):
         event_sink.fire(parse.CloseResp(reason))
+
+
