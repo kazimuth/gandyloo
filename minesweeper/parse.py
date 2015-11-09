@@ -2,59 +2,64 @@ import re
 
 from minesweeper import board
 
-def parse(message, first=False):
-    '''Parse a message into a Response.'''
+_NEWLINE = re.compile(r'\r\n?|\n')
 
-    if first:
-        return Response(ResponseType.HELLO, message)
+def parse_start(buf, size=None, first=False):
+    '''Extract a message from the start of a string.
+    raise NotReadyError if the string does not contain an entire message.
+    return (Response, rest of buf after Response is consumed).
 
-    if ResponseType.BOOM.regex.match(message):
-        return Response(ResponseType.BOOM, message)
-
-    if ResponseType.BOARD.regex.match(message):
-        return Response(ResponseType.BOARD, message)
-
-    return Response(ResponseType.HELP, message)
-
-class ResponseType:
-    '''Types of message that can be received from the Minesweeper Server.
-    
-    Attributes:
-        name: the NAME of the response type.
-        regex: a regular expression that matches responses of the type.
-
-    Variants:
-        ResponseType.HELLO
-        ResponseType.HELP
-        ResponseType.BOARD
-        ResponseType.BOOM
+    Arguments:
+        size:  (width, height) of expected boards, or None if first=True.
+        first: if this is the first message received (i.e. it should be a
+               HELLO).
     '''
 
-    def __init__(self, name, regex):
-        self.name = name
-        self.regex = re.compile(regex)
+    if not _NEWLINE.search(buf):
+        raise NotReadyError()
 
-    def __str__(self):
-        return self.name
+    # First message; should be a HELLO.
+    if first:
+        hello_match = HelloResp.regex.match(buf)
+        if hello_match:
+            message = hello_match.group(0)
+            return HelloResp(message), buf[len(message):]
+        else:
+            raise InvalidResponseError('HELLO does not match spec', buf)
 
-    def __repr__(self):
-        return self.name
+    boom_match = BoomResp.regex.match(buf)
+    if boom_match:
+        message = boom_match.group(0)
+        return BoomResp(message), buf[len(message):]
 
-# Make a wacky enum-thing.
-ResponseType.HELLO = ResponseType('HELLO', r'Welcome to Minesweeper. Board: ([0-9]+) columns by ([0-9]+) rows. '
-        + r"Players: ([0-9]+) including you. Type 'help' for help.(?:\r\n?|\n)$")
-ResponseType.HELP  = ResponseType('HELP',  r'[^\r\n]+(\r\n?|\n)$')
-ResponseType.BOARD = ResponseType('BOARD', r'(([0-8F -] )*[0-8F -](\r\n?|\n))+$')
-ResponseType.BOOM  = ResponseType('BOOM',  r'BOOM!(\r\n?|\n)$')
+    board_match = BoardResp.regex.match(buf)
+    if board_match:
+        width, height = size
+        message = board_match.group(0)
+        lines = message.splitlines(True) # keep newlines
+        if len(lines) < height:
+            # We haven't received the full board
+            raise NotReadyError()
+
+        # We may have received multiple boards; only take
+        # the first one.
+        message = ''.join(lines[:height])
+        
+        board = parse_board(message, size)
+        return BoardResp(message, board), buf[len(message):]
+
+    help_match = HelpResp.regex.match(buf)
+    if help_match:
+        message = help_match.group(0)
+        return HelpResp(message), buf[len(message):]
 
 
 class Response:
     '''A parsed response from a minesweeper server.
 
     Attributes:
-        type:     the ResponseType of this response.
         contents: the textual contents of this response.
-        board:    if this response is a BOARD, a minesweeper.board.Board
+        board:    if this response is a BOARD, a minesweeper.board.BoardResp
                   storing its contents.
         players:  if this response is a HELLO, the number of players given
                   by the HELLO.
@@ -62,52 +67,86 @@ class Response:
                   map given by the HELLO.
     '''
 
-    def __init__(self, type, contents):
-        '''Create a response of a type, with the given contents.'''
-        if not type.regex.match(contents):
-            raise InvalidResponseError(contents)
 
-        self.type = type
+class HelpResp(Response):
+    regex = re.compile(r'[^\r\n]+(\r\n?|\n)')
+
+    def __init__(self, contents):
+        if not HelpResp.regex.match(contents):
+            raise InvalidResponseError('Invalid HELP message', contents)
         self.contents = contents
 
-        if self.type == ResponseType.BOARD:
-            self.board = _parse_board(self.contents)
-        else:
-            self.board = None
 
-        if self.type == ResponseType.HELLO:
-            match = ResponseType.HELLO.regex.match(self.contents)
-            self.size = (int(match.group(1)), int(match.group(2)))
-            self.players = int(match.group(3))
-        else:
-            self.size = None
-            self.players = None
+class BoomResp(Response):
+    regex = re.compile(r'BOOM!(\r\n?|\n)')
+
+    def __init__(self, contents):
+        if not HelpResp.regex.match(contents):
+            raise InvalidResponseError('Invalid HELP message', contents)
+        self.contents = contents
+
+
+class HelloResp(Response):
+    regex = re.compile(r'Welcome to Minesweeper. '
+            + r'BoardResp: ([0-9]+) columns by ([0-9]+) rows. '
+            + r'Players: ([0-9]+) including you. '
+            + r"Type 'help' for help.(?:\r\n?|\n)")
+
+    def __init__(self, contents):
+        match = HelloResp.regex.match(contents)
+        self.size = (int(match.group(1)), int(match.group(2)))
+        self.players = int(match.group(3))
+        self.contents = contents
+
+
+class BoardResp(Response):
+    regex = re.compile(r'(([0-8F -] )*[0-8F -](\r\n?|\n))+')
+
+    def __init__(self, contents, board):
+        '''Note: board MUST be the result of parse_board(contents).'''
+        self.board = board
+        self.contents = contents
+
+
+class CloseResp(Response):
+    '''Represents the connection from the server closing.'''
+    def __init__(self, reason):
+        self.reason = reason
+
 
 class InvalidResponseError(Exception):
-    def __init__(self, response):
+    def __init__(self, cause, response):
+        self.cause = cause
         self.response = response
 
     def __str__(self):
-        return self.response
+        return self.cause
 
-def _parse_board(board_contents):
-    '''Parse a board into a Board object.'''
+
+class NotReadyError(Exception):
+    pass
+
+
+def parse_board(board_contents, expected_size):
+    '''Parse a board into a BoardResp object.
+    board_contents must match BoardResp.regex.'''
     lines = board_contents.splitlines()
-    print lines
     if lines[-1] == '':
         lines = lines[:-1]
 
-    assert len(lines) > 0
-    
-    height = len(lines)
-    width = len(lines[0][::2])
+    width, height = expected_size
 
-    print width, height
+    if len(lines) != height:
+        raise InvalidResponseError('Wrong size board', board_contents)
 
     result = board.Board(width, height)
 
     for (y, line) in enumerate(lines):
-        for (x, tile) in enumerate(line[::2]):
+        line_tiles = line[::2]
+        if len(line_tiles) != width:
+            raise InvalidResponseError('Wrong size board', board_contents)
+
+        for (x, tile) in enumerate(line_tiles):
             if tile == '-':
                 result[x, y] = board.Untouched()
             elif tile == 'F':
@@ -118,6 +157,7 @@ def _parse_board(board_contents):
                 try:
                     result[x, y] = board.Dug(int(tile))
                 except:
-                    raise InvalidResponseError(board_contents)
+                    raise InvalidResponseError('Invalid tile',
+                            board_contents)
 
     return result
