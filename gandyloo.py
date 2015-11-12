@@ -359,10 +359,10 @@ class MinesweeperMapMinimap(object):
                 return result
 
             mmw, mmh = size
-            aw, ah = self.model.cached_aperture_size
+            bw, bh = self.model.board_size
             
-            x_scale = float(aw) / float(mmw)
-            y_scale = float(ah) / float(mmh)
+            x_scale = float(bw) / float(mmw)
+            y_scale = float(bh) / float(mmh)
 
             result_strings = []
             result_attrs = []
@@ -378,6 +378,11 @@ class MinesweeperMapMinimap(object):
 
                 result_strings.append(row)
                 result_attrs.append(row_attr)
+
+            sx, sy = self.model.selected
+            mmsx, mmsy = clamp(int(round(sx / x_scale)), 0, mmw-1), clamp(int(round(sy / y_scale)), 0, mmh-1)
+
+            result_strings[mmsy] = result_strings[mmsy][:mmsx] + 'X' + result_strings[mmsy][mmsx+1:]
 
             return urwid.TextCanvas(result_strings, result_attrs,
                     maxcol=mmw,
