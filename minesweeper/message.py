@@ -1,6 +1,31 @@
 import re
 
-class Command:
+class MessageRelay(object):
+    '''A class to pass around commands to the server and responses from
+    the server.
+    Call command() to send a command to all of its command receivers,
+    and response() to send a response to all of its response receivers.
+    '''
+
+    def __init__(self):
+        self.command_receivers = []
+        self.response_receivers = []
+
+    def add_command_receiver(self, receiver):
+        self.command_receivers.append(receiver)
+
+    def add_response_receiver(self, receiver):
+        self.response_receivers.append(receiver)
+
+    def command(self, command):
+        for receiver in self.command_receivers:
+            receiver.command(command)
+
+    def response(self, response):
+        for receiver in self.response_receivers:
+            receiver.response(response)
+
+class Command(object):
     '''A command to send to the minecraft server.
     Must have a method render() to turn into a minesweeper-compatible
     command message.
@@ -9,19 +34,19 @@ class Command:
     def render(self):
         pass
 
-class LookCommand:
+class LookCommand(Command):
     def render(self):
         return 'look\n'
 
-class HelpCommand:
+class HelpCommand(Command):
     def render(self):
         return 'help\n'
 
-class ByeCommand:
+class ByeCommand(Command):
     def render(self):
         return 'bye\n'
 
-class DigCommand:
+class DigCommand(Command):
     def __init__(self, target):
         assert len(target) == 2
         self.target = target
@@ -29,7 +54,7 @@ class DigCommand:
     def render(self):
         return 'dig {} {}\n'.format(*self.target)
 
-class FlagCommand:
+class FlagCommand(Command):
     def __init__(self, target):
         assert len(target) == 2
         self.target = target
@@ -37,7 +62,7 @@ class FlagCommand:
     def render(self):
         return 'flag {} {}\n'.format(*self.target)
 
-class DeflagCommand:
+class DeflagCommand(Command):
     def __init__(self, target):
         assert len(target) == 2
         self.target = target
@@ -46,11 +71,11 @@ class DeflagCommand:
         return 'deflag {} {}\n'.format(*self.target)
 
 
-class Response:
+class Response(object):
     '''A parsed response from a minesweeper server.
 
     Attributes:
-        contents: the textual contents of this response.
+        contents: if this response is a HELP, the textual contents of this response.
         board:    if this response is a BOARD, a minesweeper.board.BoardResp
                   storing its contents.
         players:  if this response is a HELLO, the number of players given
@@ -60,40 +85,20 @@ class Response:
     '''
 
 class HelpResp(Response):
-    regex = re.compile(r'[^\r\n]+(\r\n?|\n)')
-
     def __init__(self, contents):
-        if not HelpResp.regex.match(contents):
-            raise InvalidResponseError('Invalid HELP message', contents)
         self.contents = contents
 
 class BoomResp(Response):
-    regex = re.compile(r'BOOM!(\r\n?|\n)')
-
-    def __init__(self, contents):
-        if not HelpResp.regex.match(contents):
-            raise InvalidResponseError('Invalid HELP message', contents)
-        self.contents = contents
+    pass
 
 class HelloResp(Response):
-    regex = re.compile(r'Welcome to Minesweeper. '
-            + r'Board: ([0-9]+) columns by ([0-9]+) rows. '
-            + r'Players: ([0-9]+) including you. '
-            + r"Type 'help' for help.(?:\r\n?|\n)")
-
-    def __init__(self, contents):
-        match = HelloResp.regex.match(contents)
-        self.size = (int(match.group(1)), int(match.group(2)))
-        self.players = int(match.group(3))
-        self.contents = contents
+    def __init__(self, size, players):
+        self.size = size
+        self.players = players
 
 class BoardResp(Response):
-    regex = re.compile(r'(([0-8F -] )*[0-8F -](\r\n?|\n))+')
-
-    def __init__(self, contents, board):
-        '''Note: board MUST be the result of parse_board(contents).'''
+    def __init__(self, board):
         self.board = board
-        self.contents = contents
 
 class CloseResp(Response):
     '''Represents the connection from the server closing.'''

@@ -4,6 +4,15 @@ from minesweeper import message, board
 
 _NEWLINE = re.compile(r'\r\n?|\n')
 
+class ResponseParsers:
+    HELLO = re.compile(r'Welcome to Minesweeper. '
+            + r'Board: ([0-9]+) columns by ([0-9]+) rows. '
+            + r'Players: ([0-9]+) including you. '
+            + r"Type 'help' for help.(?:\r\n?|\n)")
+    BOOM = re.compile(r'BOOM!(\r\n?|\n)')
+    BOARD = re.compile(r'(([0-8F -] )*[0-8F -](\r\n?|\n))+')
+    HELP = re.compile(r'[^\r\n]+(\r\n?|\n)')
+
 def parse_start(buf, size=None, first=False):
     '''Extract a message from the start of a string.
     raise NotReadyError if the string does not contain an entire message.
@@ -14,25 +23,28 @@ def parse_start(buf, size=None, first=False):
         first: if this is the first message received (i.e. it should be a
                HELLO).
     '''
-
+    
+    while buf.startswith('\n') or buf.startswith('\r'):
+        buf = buf[1:]
+    
     if not _NEWLINE.search(buf):
         raise NotReadyError()
 
-    # First message; should be a HELLO.
+    # First message; must be a HELLO.
     if first:
-        hello_match = message.HelloResp.regex.match(buf)
+        hello_match = ResponseParsers.HELLO.match(buf)
         if hello_match:
-            contents = hello_match.group(0)
-            return message.HelloResp(contents), buf[len(contents):]
+            size = (int(hello_match.group(1)), int(hello_match.group(2)))
+            players = int(hello_match.group(3))
+            return message.HelloResp(size, players), buf[hello_match.end():]
         else:
             raise InvalidResponseError('HELLO does not match spec', buf)
 
-    boom_match = message.BoomResp.regex.match(buf)
+    boom_match = ResponseParsers.BOOM.match(buf)
     if boom_match:
-        contents = boom_match.group(0)
-        return message.BoomResp(contents), buf[len(contents):]
+        return message.BoomResp(), buf[boom_match.end():]
 
-    board_match = message.BoardResp.regex.match(buf)
+    board_match = ResponseParsers.BOARD.match(buf)
     if board_match:
         width, height = size
         contents = board_match.group(0)
@@ -44,14 +56,14 @@ def parse_start(buf, size=None, first=False):
         # We may have received multiple boards; only take
         # the first one.
         contents = ''.join(lines[:height])
-        
-        board = parse_board(contents, size)
-        return message.BoardResp(contents, board), buf[len(contents):]
 
-    help_match = message.HelpResp.regex.match(buf)
+        board = parse_board(contents, size)
+        return message.BoardResp(board), buf[len(contents):]
+
+    help_match = ResponseParsers.HELP.match(buf)
     if help_match:
         contents = help_match.group(0)
-        return message.HelpResp(contents), buf[len(contents):]
+        return message.HelpResp(contents), buf[help_match.end():]
 
     raise InvalidResponseError("No match on response (this should be impossible)", buf)
 
@@ -98,7 +110,7 @@ class InvalidResponseError(Exception):
         self.response = response
 
     def __str__(self):
-        return self.cause
+        return self.cause + ": " + repr(self.response)
 
 
 class NotReadyError(Exception):

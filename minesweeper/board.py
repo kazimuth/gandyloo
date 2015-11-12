@@ -5,6 +5,8 @@ class Board:
     Access individual items like so:
         board[x, y]
         board[x, y] = 0
+    board[0, 0] is the top left; board[board.width-1, board.height-1]
+    is the bottom right.
     Out-of-bounds accesses will raise an exception.
     '''
     # _tiles is a width*height byte array.
@@ -48,7 +50,7 @@ class Board:
     def in_bounds(self, x, y):
         return 0 <= x < self.width and 0 <= y < self.height
 
-class Tile:
+class Tile(object):
     pass
 
 class Dug(Tile):

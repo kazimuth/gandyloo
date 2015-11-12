@@ -20,19 +20,19 @@ class MinesweeperClient(Protocol):
         if not self.hello_received:
             try:
                 resp, self.buffer = parse.parse_start(self.buffer, first=True)
-                self.size = resp.size
-                self.event_sink.response(resp)
             except parse.NotReadyError:
                 return # Haven't received enough data yet
-
+            self.hello_received = True
+            self.size = resp.size
+            self.event_sink.response(resp)
         try:
             while True:
                 resp, self.buffer = parse.parse_start(self.buffer, self.size)
-                event_sink.response(resp)
+                self.event_sink.response(resp)
         except parse.NotReadyError:
             return
 
-    def sendCommand(self, command):
+    def command(self, command):
         self.transport.write(command.render())
 
     def clientConnectionLost(self, connection, reason):
