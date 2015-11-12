@@ -16,7 +16,7 @@ class MinesweeperMapMinimap(object):
     size of the map, and a rectangle of the currently visible area. It isn't
     actually directly selectable.
     We cheat to store the size of the aperture so that the minimap can render
-    it's scroll rectangle in the correct size.
+    its scroll rectangle in the correct size.
     Access .map to get the Map widget, and .minimap to get the Minimap
     widget.
     '''
@@ -427,10 +427,16 @@ def handle_exit(key):
         if key.lower() in ('q', 'ctrl c', 'ctrl d'):
             raise urwid.ExitMainLoop()
 
-HELP_MESSAGE = u'''Welcome to the gandyloo gandyloo interface!
+HELP_MESSAGE = u'''Welcome to the gandyloo minesweeper interface!
 
 Controls:
-    - Movement can be done with:
+    - Standard mouse control!
+        Note: there's currently no way to move
+              your viewport around the board
+              with the mouse; you'll have to
+              use the keyboard.
+
+    - Alternatively, movement can be done with:
         - WASD       (fps-style)
         - hjkl+yubn  (roguelike-style)
         - arrow keys (normal-style)
@@ -439,10 +445,12 @@ Controls:
 
     - To dig:
         - Enter
+        - 1
 
     - To flag:
         - '
         - f
+        - 2
 
     - To quit:
         - q
@@ -457,7 +465,7 @@ About:
 # Final setup
 if __name__ == '__main__':
     import argparse
-    parser = argparse.ArgumentParser(description="6.005 compatible gandyloo client.")
+    parser = argparse.ArgumentParser(description="6.005 compatible minesweeper client.")
     parser.add_argument('--server', default='localhost', help='The server to connect to [default: localhost]')
     parser.add_argument('--port', default='4444', type=int, help='The port to connect to [default: 4444]')
     args = parser.parse_args()

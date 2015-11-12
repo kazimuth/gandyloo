@@ -12,7 +12,7 @@ Alternatively:
  - `gandysweeper.py --server SERVER --port PORT`
 
 Screenshot:
-![Screenshot](https://cloud.githubusercontent.com/assets/555667/11114150/718c6f78-88f0-11e5-8a79-9ec163b5cf65.png)
+![Screenshot](https://cloud.githubusercontent.com/assets/555667/11114203/e1ee9688-88f0-11e5-8371-ab3a5f61d2b3.png)
 
 # Test Suite
 The test suite can be run with pytest.
