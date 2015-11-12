@@ -424,8 +424,36 @@ def handle_exit(key):
         if key.lower() in ('q', 'ctrl c', 'ctrl d'):
             raise urwid.ExitMainLoop()
 
+HELP_MESSAGE = u'''Welcome to the gandyloo minesweeper interface!
+
+Controls:
+    - Movement can be done with:
+        - WASD       (fps-style)
+        - hjkl+yubn  (roguelike-style)
+        - arrow keys (normal-style)
+
+    - Press shift to move faster!
+
+    - To dig:
+        - Enter
+
+    - To flag:
+        - '
+        - f
+
+About:
+    Author:  James Gilles
+    License: MIT
+'''
+
 # Final setup
 if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description="6.005 compatible minesweeper client.")
+    parser.add_argument('--server', default='localhost', help='The server to connect to [default: localhost]')
+    parser.add_argument('--port', default='4444', type=int, help='The port to connect to [default: 4444]')
+    args = parser.parse_args()
+
     from minesweeper.connection import MinesweeperClient
     from twisted.internet import reactor
     from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol
@@ -436,14 +464,14 @@ if __name__ == '__main__':
 
     client = MinesweeperClient(relay)
 
-    point = TCP4ClientEndpoint(reactor, 'localhost', 4444)
+    point = TCP4ClientEndpoint(reactor, args.server, args.port)
     d = connectProtocol(point, client)
 
     relay.add_command_receiver(client)
     relay.add_response_receiver(model)
 
     minimap = urwid.LineBox(model.minimap, "Minimap")
-    help_box = urwid.LineBox(urwid.Filler(urwid.Text("help message"), 'top'), 'Help')
+    help_box = urwid.LineBox(urwid.Filler(urwid.Text(HELP_MESSAGE), 'top'), 'Help')
     mini_help_stack = urwid.Pile([('weight', .3, minimap), ('weight', .7, help_box)])
 
     main_map = urwid.LineBox(model.map, "Gandyloo")
