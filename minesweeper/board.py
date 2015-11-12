@@ -25,8 +25,8 @@ class Board:
         self._tiles = array('B', [9]*(width*height))
 
     def __getitem__(self, idx):
+        assert self.in_bounds(idx)
         x, y = idx
-        assert self.in_bounds(x, y)
 
         tile = self._tiles[x + y*self.width]
         if 0 <= tile <= 8:
@@ -37,8 +37,8 @@ class Board:
             return Flagged()
 
     def __setitem__(self, idx, val):
+        assert self.in_bounds(idx)
         x, y = idx
-        assert self.in_bounds(x, y)
 
         if isinstance(val, Dug):
             self._tiles[x + y*self.width] = val.surrounding
@@ -47,7 +47,8 @@ class Board:
         elif isinstance(val, Flagged):
             self._tiles[x + y*self.width] = 10
 
-    def in_bounds(self, x, y):
+    def in_bounds(self, coord):
+        x, y = coord
         return 0 <= x < self.width and 0 <= y < self.height
 
 class Tile(object):
