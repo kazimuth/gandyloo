@@ -1,5 +1,5 @@
 import pytest
-from minesweeper import board
+from gandyloo import board
 
 def test_init():
     b = board.Board(10, 10)

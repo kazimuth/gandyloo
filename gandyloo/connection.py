@@ -1,10 +1,10 @@
 from twisted.internet.protocol import Protocol
-from minesweeper import parse
+from gandyloo import parse
 
 class MinesweeperClient(Protocol):
     '''Represents a connection to a server using twisted's Protocol framework.
     Created with an event sink, where parsed events (subclasses of
-    minesweeper.message.Response) are fired. Sink should have a method
+    gandyloo.message.Response) are fired. Sink should have a method
     self.response(resp).
     '''
 

@@ -1,7 +1,7 @@
 from array import array
 
 class Board:
-    '''Class representing a (client-side) minesweeper board.
+    '''Class representing a (client-side) gandyloo board.
     Access individual items like so:
         board[x, y]
         board[x, y] = 0

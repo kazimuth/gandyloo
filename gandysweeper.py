@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 import urwid
 
-from minesweeper import board, parse, message
+from gandyloo import board, parse, message
 
 def clamp(n, minn, maxn):
     return max(min(maxn, n), minn)
@@ -424,7 +424,7 @@ def handle_exit(key):
         if key.lower() in ('q', 'ctrl c', 'ctrl d'):
             raise urwid.ExitMainLoop()
 
-HELP_MESSAGE = u'''Welcome to the gandyloo minesweeper interface!
+HELP_MESSAGE = u'''Welcome to the gandyloo gandyloo interface!
 
 Controls:
     - Movement can be done with:
@@ -449,12 +449,12 @@ About:
 # Final setup
 if __name__ == '__main__':
     import argparse
-    parser = argparse.ArgumentParser(description="6.005 compatible minesweeper client.")
+    parser = argparse.ArgumentParser(description="6.005 compatible gandyloo client.")
     parser.add_argument('--server', default='localhost', help='The server to connect to [default: localhost]')
     parser.add_argument('--port', default='4444', type=int, help='The port to connect to [default: 4444]')
     args = parser.parse_args()
 
-    from minesweeper.connection import MinesweeperClient
+    from gandyloo.connection import MinesweeperClient
     from twisted.internet import reactor
     from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol
 

@@ -27,7 +27,7 @@ class MessageRelay(object):
 
 class Command(object):
     '''A command to send to the minecraft server.
-    Must have a method render() to turn into a minesweeper-compatible
+    Must have a method render() to turn into a gandyloo-compatible
     command message.
     '''
 
@@ -72,11 +72,11 @@ class DeflagCommand(Command):
 
 
 class Response(object):
-    '''A parsed response from a minesweeper server.
+    '''A parsed response from a gandyloo server.
 
     Attributes:
         contents: if this response is a HELP, the textual contents of this response.
-        board:    if this response is a BOARD, a minesweeper.board.BoardResp
+        board:    if this response is a BOARD, a gandyloo.board.BoardResp
                   storing its contents.
         players:  if this response is a HELLO, the number of players given
                   by the HELLO.

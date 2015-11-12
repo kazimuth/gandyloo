@@ -1,4 +1,4 @@
-from minesweeper import message, board
+from gandyloo import message, board
 import pytest
 
 def test_rendering():

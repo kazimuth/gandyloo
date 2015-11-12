@@ -1,6 +1,6 @@
 import re
 
-from minesweeper import message, board
+from gandyloo import message, board
 
 _NEWLINE = re.compile(r'\r\n?|\n')
 

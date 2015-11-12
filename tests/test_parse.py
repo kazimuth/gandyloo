@@ -1,5 +1,5 @@
 import pytest
-from minesweeper import parse, message, board
+from gandyloo import parse, message, board
 
 def test_parse_first():
     resp, new_buf = parse.parse_start("Welcome to Minesweeper. Board: 40 columns by 37 rows. Players: 1 including you. Type 'help' for help.\n", first=True)
