@@ -264,6 +264,9 @@ class MinesweeperMapMinimap(object):
 
         def mouse_event(self, size, event, button, col, row, focus):
             self.model.resize_aperture(size)
+
+            if self.model.state != 'board':
+                return
             
             if 'mouse press' in event:
                 asx, asy = self.model.aperture_selected
@@ -440,6 +443,11 @@ Controls:
     - To flag:
         - '
         - f
+
+    - To quit:
+        - q
+        - ctrl-c
+        - ctrl-d
 
 About:
     Author:  James Gilles
